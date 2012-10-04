@@ -1,13 +1,23 @@
 
 
 data segment      
+
+MENU db 0Ah, 0Ah, 09h, 09h, 09h, 'MENU$', 
+OPTION1 db 0Ah, 0Dh, 0Ah,09h, 09h,'1-Enter values$' 
+OPTION2 db 0Dh, 0Ah, 09h,09h,'2-Add$'
+OPTION3 db 0Dh, 0Ah, 09h,09h,'3-Subtract$'
+OPTION4 db 0Dh, 0Ah, 09h,09h,'4-Multiply$'
+QUIT db 0Dh, 0Ah, 0Ah, 09h,09h,'Q-QUIT$'
+CHOICEPROMPT db 0Ah, 0Ah, 0Dh,09h,'Enter choice of operation:$' 
+SHOWADD db 0Ah, 0Ah, 0Dh, 09h,'X+Y=$'
+SHOWSUB db 0Ah, 0Ah, 0Dh, 09h,'X-Y=$'
+SHOWMULT db 0Ah, 0Ah, 0Dh, 09h,'X*Y=$' 
+INPUTX db 0Ah, 0Ah, 0Dh, 09h,'X:$'
+INPUTY db 0Ah, 0Dh, 09h,'Y:$'
     
-AGREETING db 'Enter A:$'
-BGREETING db 0Ah , 'Enter B:$'
-A           db  4  DUP(?)
-B           db  4  DUP(?) 
-SUM         db  4  DUP(?)         
- 
+X           db  4  DUP(?)
+Y           db  4  DUP(?) 
+SUM         db  4  DUP(?)          
 NUMBER      db  11 DUP(?)
 DIFFERENCE  dw  4  DUP(?)
 ends   
@@ -23,55 +33,149 @@ code segment
         mov ax, data
         mov ds, ax
         mov es, ax
-    
-        call Retrieve_A 
-         
-        call Retrieve_B 
         
-        call ADD_A_B
+        mov AH, 00h
+        mov AL, 03h
+        int 10h 
         
-        call AminuB
+        mov AH, 09h
+        mov AL, ' '
+        mov BH, 0
+        mov BL, 00011110b
+        mov CX, 10000d
+        int 10h
         
+        call Display_Menu 
         
-        call EXIT
+        Keep_Menu:
+        call Reactive_Display    
+        jmp Keep_Menu
         
-        
-        
-        
+        ret
+       
     main endp
     
-    ;Special call for retrieving A, converting it then returning it;
-    Retrieve_A proc near:
-               
-        mov DX, offset AGREETING ;set DX to the address of A
-        mov AH, 9h
+    Display_Menu proc near 
+        
+        
+        lea DX, MENU
+        call Display_String
+       
+        lea DX, OPTION1
+        call Display_String
+        
+        lea DX, OPTION2
+        call Display_String
+        
+        lea DX, OPTION3
+        call Display_String
+        
+        lea DX, OPTION4
+        call Display_String 
+        
+        lea DX, QUIT
+        call Display_String
+        
+        lea DX, CHOICEPROMPT
+        call Display_String  
            
-        int 21h
-        call INPUT_NUMBER 
-        lea DI, A
-        call CONV_ASC2BIN
-        call Erase_Variables
         ret
         
-    Retrieve_A endp 
+    Display_Menu endp
+    
+
+    Display_String proc near
+        mov AH, 09h
+        int 21h
+        
+        ret
+    Display_String endp
+    
+    Retrieve_Action proc near
+        
+        mov AH, 01h
+        int 21h
+        
+        cmp AL, 51h
+        jz EXIT
+        
+        cmp AL, 71h
+        jz EXIT 
+        
+        cmp AL, 31h
+        call Retrieve_Numbers
+        jmp END 
+        
+        cmp AL, 32h
+        
+        jmp END
+        
+        cmp AL, 33h
+        
+        jmp END
+        
+        cmp AL, 34h
+        
+         
+        END: 
+        
+        ret
+    Retrieve_Action endp
+    
+    Reactive_Display proc near
+       
+        call Retrieve_Action
+        
+        ret 
+        
+        
+    Reactive_Display endp
+    
+    Retrieve_Numbers proc near 
+        
+        call Retrieve_X
+        call Retrieve_Y
+        
+        ret
+        
+    Retrieve_Numbers endp
+    
+   
+    Retrieve_X proc near:
+               
+        lea DX, INPUTX 
+        call Display_String
+        
+        call INPUT_NUMBER
+         
+        lea DI, X
+        
+        call CONV_ASC2BIN
+        call Erase_Variables 
+        
+        ret
+        
+    Retrieve_X endp 
     
     
-    ;Special call for retrieving A, converting it then returning it;
-    Retrieve_B proc near:
+   
+    Retrieve_Y proc near:
 
         
-        mov DX, offset BGREETING ; set DX to the address of B    
-        mov AH, 9h
-        int 21h
-        call INPUT_NUMBER
-        lea DI, B
+        lea DX, INPUTY    
+        call Display_String
+        
+        call INPUT_NUMBER 
+        
+        lea DI, Y
+        
         call CONV_ASC2BIN  
-        ;call Erase_Variables
+        call Erase_Variables
         ret    
         
     
     
-    Retrieve_B endp
+    Retrieve_Y endp
 
     ;Grab the number from the user;
     INPUT_NUMBER proc near
@@ -86,10 +190,6 @@ code segment
         
         cmp AL, 0Dh    ; see if the user hits Enter or 'q'/ 'Q'
         jz returnNumber
-        cmp AL, 'Q'
-        jz EXIT     
-        cmp AL, 'q'  
-        jz EXIT
         
         mov [DI], AL
         inc DI
@@ -254,6 +354,16 @@ code segment
     ret
     
     AminuB endp
+    
+    PRODUCT_A_B proc near
+        lea SI, X
+        lea BX, Y
+        lea 
+        
+        
+        ret
+        
+    PRODUCT_A_B endp
 
     
        
