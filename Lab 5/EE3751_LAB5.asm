@@ -16,7 +16,8 @@ INPUTX db 0Ah, 0Ah, 0Dh, 09h,'X:$'
 INPUTY db 0Ah, 0Dh, 09h,'Y:$'
     
 X           db  4  DUP(?)
-Y           db  4  DUP(?) 
+Y           db  4  DUP(?)
+COUNT       db  4  DUP(?) 
 SUM         db  4  DUP(?)          
 NUMBER      db  11 DUP(?)
 DIFFERENCE  dw  4  DUP(?)
@@ -107,15 +108,15 @@ code segment
         jmp END 
         
         cmp AL, 32h
-        
+        call ADD_X_Y
         jmp END
         
         cmp AL, 33h
-        
+        call XminuY
         jmp END
         
         cmp AL, 34h
-        
+        call PRODUCT_A_B
          
         END: 
         
@@ -290,29 +291,12 @@ code segment
     ret
 
     CONV_ASC2BIN endp
-  
-    ; Erase all the variables ;
-    Erase_Variables proc near
-          
-         mov CX, 11
-         lea DI, Number
-         clearNumber:
-            mov [DI], 00h
-            inc DI   
-         loop clearNumber
-         
-         mov DX, 0000h
-         mov AH, 00h
     
-    
-        ret
-    Erase_Variables endp
-    
-    ADD_A_B proc near 
+    ADD_X_Y proc near 
         
         mov DI,offset SUM+3
-        mov SI,offset A+3
-        mov BX,Offset B+3
+        mov SI,offset X+3
+        mov BX,Offset Y+3
         
         clc
         mov CX,4
@@ -331,12 +315,12 @@ code segment
     
     ret
     
-    ADD_A_B endp 
+    ADD_X_Y endp 
 
-    AminuB proc near
+    XminuY proc near
         mov DI,offset DIFFERENCE+3
-        mov SI,offset A+3
-        mov BX,Offset B+3
+        mov SI,offset X+3
+        mov BX,Offset Y+3
         
         clc
         mov CX,4
@@ -353,18 +337,34 @@ code segment
     
     ret
     
-    AminuB endp
+    XminuY endp
     
     PRODUCT_A_B proc near
         lea SI, X
         lea BX, Y
-        lea 
+         
         
         
         ret
         
     PRODUCT_A_B endp
 
+    ; Erase all the variables ;
+    Erase_Variables proc near
+          
+         mov CX, 11
+         lea DI, Number
+         clearNumber:
+            mov [DI], 00h
+            inc DI   
+         loop clearNumber
+         
+         mov DX, 0000h
+         mov AH, 00h
+    
+    
+        ret
+    Erase_Variables endp
     
        
     EXIT proc near
