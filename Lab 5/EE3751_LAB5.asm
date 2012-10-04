@@ -180,24 +180,61 @@ code segment
 
     ;Grab the number from the user;
     INPUT_NUMBER proc near
-        mov CX, 00h
-        mov DI, offset NUMBER
-        
-        
-        mov BX, 0
-        getNumber:
-        mov AH, 01h ;Grabs the number storing count in BX, DI pointing to number
-        int 21h      
-        
-        cmp AL, 0Dh    ; see if the user hits Enter or 'q'/ 'Q'
-        jz returnNumber
-        
-        mov [DI], AL
-        inc DI
-        inc BX 
-        jmp getNumber
-        
-        returnNumber:
+         MOV DI, offset NUMBER
+    
+    MOV CX,9
+    INPUT:
+    MOV AH, 01H
+    INT 21H 
+    
+    CMP AL,'Q'
+    JZ  EXIT
+    CMP AL,'q'
+    JZ  EXIT  
+    CMP AL,0Dh
+    JZ  NEXT
+   
+    
+     
+    MOV [DI],AL
+    INC DI 
+    LOOP  INPUT 
+   
+    CMP CX,0h
+    JZ RETURN
+    NEXT:
+    ;CX HAVE A VALUE IF CX=1 MOVE NUMBER RIGHT 1
+    ;REARRENGE THE NUMBERS
+    
+    
+    MOV BX,CX
+    
+    FILLING_ZERO:
+    MOV AX,30h
+    PUSH AX
+    LOOP FILLING_ZERO  
+    
+    MOV DI, offset NUMBER
+    
+    NOT BX
+    ADD BX,10d
+    
+    MOV CX,BX
+    LOAD_NUMBER:
+    PUSH [DI]
+    INC DI
+    LOOP LOAD_NUMBER 
+    
+    MOV CX,9
+    MOV DI, offset NUMBER+8  
+    SET_NUMBER:
+    POP AX
+    MOV [DI],AL
+    DEC DI
+    LOOP SET_NUMBER
+     
+    RETURN:
+
         ret
         
     INPUT_NUMBER endp
@@ -205,89 +242,90 @@ code segment
     ; Convert from ASCII to Binary ;             
     CONV_ASC2BIN proc near
         
-    mov SI,offset NUMBER
+   
     
-    mov CX,9
+    lea SI, NUMBER
+    
+    mov CX, 9
     ;MOVING ALL NUMBER TO DECIMAL
-    Here:
-        sub [SI],30H
-        inc SI
-    loop Here ;END CONVERSION TO BINARY
+    HERE:
+        SUB [SI],30H
+        INC SI
+        LOOP HERE ;END CONVERSION TO BINARY
+        
+         
+        
+        ; CREATE TABLE FROM 10^0 TO 10^9
+        MOV CX,8
+        
+        MOV BX,10d
+        MOV AX,01 
+        MOV DX,0 
+        PUSH DX
+        PUSH AX
     
-     
-    
-    ; CREATE TABLE FROM 10^0 TO 10^9
-    mov CX,8
-    
-    mov BX,10d
-    mov AX,01 
-    mov DX,0 
-    push DX
-    push AX
-    
-    Table:
-        mul BX
-        push DX
-        push AX
-    loop table 
-    
-    ;FIXING THE MSB FROM TABLE
-    mov CX,8 
-    add SP,34d
-    
-    FIX_MSB:
-    
-        pop AX
-        mul BL
-        sub SP,6
-        pop DX
-        add AX,DX
-        push AX
-    
-    
-    loop FIX_MSB ;END CREATE TABLE/FIXING
-    sub SP,2
-    
-    ;BEGINING MULTIPLICATION AND MOVING DESTINATION
-    mov SI,offset NUMBER
-    clc
-    pushf
-    
-    Here2:
-    
-        mov AX,[SI]
-        and AX,0Fh
-        popf
-        pop BX
-        pushf
-        mul BX
-        mov CX,DX
-        popf
-        adc [DI+3],AL 
-        adc [DI+2],AH 
-        pushf
+    TABLE:
+        MUL BX
+        PUSH DX
+        PUSH AX
+        LOOP TABLE 
+        
+        ;FIXING THE MSB FROM TABLE
+        MOV CX,8 
+        ADD SP,34d
+        FIX_MSB:
+        
+        POP AX
+        MUL BL
+        SUB SP,6
+        POP DX
+        ADD AX,DX
+        PUSH AX
         
         
-        mov AX,[SI]
-        and AX,0Fh  
+        LOOP FIX_MSB ;END CREATE TABLE/FIXING
+        SUB SP,2
         
-        popf
-        pop BX
-        pushf
-        
-        mul BX
-        add CX,DX
-        add AX,CX
-        popf
-        adc [DI+1],AL 
-        adc [DI],AH
-        pushf 
-        inc SI
-        mov AX,offset number+9
-        cmp SI,AX
+        ;BEGINING MULTIPLICATION AND MOVING DESTINATION
+        MOV SI,offset NUMBER
+        CLC
+        PUSHF
+    HERE2:
     
-    jnz HERE2
-    popf
+        MOV AX,[SI]
+        AND AX,0Fh
+        POPF
+        POP BX
+        PUSHF
+        MUL BX
+        MOV CX,DX
+        POPF
+        ADC [DI+3],AL 
+        ADC [DI+2],AH 
+        PUSHF
+        
+        
+        MOV AX,[SI]
+        AND AX,0Fh  
+        
+        POPF
+        POP BX
+        PUSHF
+        
+        MUL BX
+        ADD CX,DX
+        ADD AX,CX
+        POPF
+        ADC [DI+1],AL 
+        ADC [DI],AH
+        PUSHF 
+        INC SI
+        MOV AX,offset number+9
+        CMP SI,AX
+        
+        JNZ HERE2
+        POPF
+
     ret
 
     CONV_ASC2BIN endp
