@@ -12,11 +12,12 @@ CHOICEPROMPT db 0Ah, 0Ah, 0Dh,09h,'Enter choice of operation:$'
 SHOWADD db 0Ah, 0Ah, 0Dh, 09h,'X+Y=$'
 SHOWSUB db 0Ah, 0Ah, 0Dh, 09h,'X-Y=$'
 SHOWMULT db 0Ah, 0Ah, 0Dh, 09h,'X*Y=$' 
-INPUTX db 0Ah, 0Ah, 0Dh, 09h,'X:$'
-INPUTY db 0Ah, 0Dh, 09h,'Y:$'
+INPUTA db 0Ah, 0Ah, 0Dh, 09h,'X:$'
+INPUTB db 0Ah, 0Dh, 09h,'Y:$'
     
-X           db  4  DUP(?)
-Y           db  4  DUP(?)
+A           db  4  DUP(?)
+B           db  4  DUP(?)
+PRODUCT     dw 4 DUP(?)
 COUNT       db  4  DUP(?) 
 SUM         db  4  DUP(?)          
 NUMBER      db  11 DUP(?)
@@ -104,19 +105,36 @@ code segment
         jz EXIT 
         
         cmp AL, 31h
+        jz numbers 
+        
+        cmp AL, 32h
+        jz calladd
+        
+        cmp AL, 33h
+        jz callsub
+        
+        cmp AL, 34h
+        jz callmult
+        
+        jmp END 
+        
+        numbers:
         call Retrieve_Numbers
         jmp END 
         
-        cmp AL, 32h
-        call ADD_X_Y
+        calladd:
+        call ADD_A_B
         jmp END
         
-        cmp AL, 33h
+        callsub:
         call XminuY
         jmp END
         
-        cmp AL, 34h
+        callmult:
         call PRODUCT_A_B
+        jmp END
+        
+        
          
         END: 
         
@@ -134,41 +152,41 @@ code segment
     
     Retrieve_Numbers proc near 
         
-        call Retrieve_X
-        call Retrieve_Y
+        call Retrieve_A
+        call Retrieve_B
         
         ret
         
     Retrieve_Numbers endp
     
    
-    Retrieve_X proc near:
+    Retrieve_A proc near:
                
-        lea DX, INPUTX 
+        lea DX, INPUTA 
         call Display_String
         
         call INPUT_NUMBER
          
-        lea DI, X
+        lea DI, A
         
         call CONV_ASC2BIN
         call Erase_Variables 
         
         ret
         
-    Retrieve_X endp 
+    Retrieve_A endp 
     
     
    
-    Retrieve_Y proc near:
+    Retrieve_B proc near:
 
         
-        lea DX, INPUTY    
+        lea DX, INPUTB    
         call Display_String
         
         call INPUT_NUMBER 
         
-        lea DI, Y
+        lea DI, B
         
         call CONV_ASC2BIN  
         call Erase_Variables
@@ -176,7 +194,7 @@ code segment
         
     
     
-    Retrieve_Y endp
+    Retrieve_B endp
 
     ;Grab the number from the user;
     INPUT_NUMBER proc near
@@ -330,11 +348,11 @@ code segment
 
     CONV_ASC2BIN endp
     
-    ADD_X_Y proc near 
+    ADD_A_B proc near 
         
         mov DI,offset SUM+3
-        mov SI,offset X+3
-        mov BX,Offset Y+3
+        mov SI,offset A+3
+        mov BX,Offset B+3
         
         clc
         mov CX,4
@@ -353,12 +371,12 @@ code segment
     
     ret
     
-    ADD_X_Y endp 
+    ADD_A_B endp 
 
     XminuY proc near
         mov DI,offset DIFFERENCE+3
-        mov SI,offset X+3
-        mov BX,Offset Y+3
+        mov SI,offset A+3
+        mov BX,Offset B+3
         
         clc
         mov CX,4
@@ -378,11 +396,50 @@ code segment
     XminuY endp
     
     PRODUCT_A_B proc near
-        lea SI, X
-        lea BX, Y
-         
+        MOV BX,OFFSET A
+        MOV SI,OFFSET B 
+        mov AH, [BX]
+        mov AL, [BX+1] 
         
+        MOV CH, [SI]
+        MOV CL, [SI+1]
+        MUL CX  
+        MOV PRODUCT,AX
+        MOV PRODUCT+2,DX 
         
+        MOV AH,[BX]
+        MOV AL,[BX+1] 
+        mov CH, [SI+2]
+        mov CL, [SI+3]
+        MUL CX
+        ADD PRODUCT+2,AX
+        ADC PRODUCT+4,DX
+        JNC L3
+        INC PRODUCT+6
+        
+        L3: MOV AH,[BX+2]
+            MOV AL,[BX+3]
+            MOV CH, [SI]
+            MOV CL, [SI+1]
+            MUL CX 
+            ADD PRODUCT+2,AX
+            ADC PRODUCT+4,DX
+            JNC L4
+            INC PRODUCT+6
+        
+        L4: MOV AH,[BX+2]
+            MOV AL,[BX+3] 
+            mov CH, [SI+2]
+            mov CL, [SI+3]
+            MUL CX
+            ADD PRODUCT+4,AX
+            ADC PRODUCT+6,DX
+            
+            MOV PRODUCT+8, 2400h ;Insert '$' so we can display String later
+            MOV AH, 09h
+            MOV DX, OFFSET PRODUCT
+            INT 21h
+
         ret
         
     PRODUCT_A_B endp
