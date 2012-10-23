@@ -93,11 +93,44 @@ code segment
         ret
     Display_String endp
     
-    Retrieve_Action proc near
+    Retrieve_Action proc near 
         
+        mov AX, 0
+        int 33h 
+        cmp AX, 0
+        jz setkeyboard
+        
+        mov AX, 1h
+        int 33h 
+        
+        getstatus:
+            mov AH, 01h
+            int 16h 
+            jnz outputoption
+            
+            mov AH, 00h
+            mov AX, 3h 
+            int 33h
+            cmp BX, 1 
+            jz leftclick
+        jmp getstatus
+            
+            
+
+        outputoption:
         mov AH, 01h
         int 21h
+        jmp keyboardread   
+
+            
+            
+        setkeyboard:     
+        mov AH, 01h
+        int 21h    
         
+        keyboardread:
+            
+
         cmp AL, 51h
         jz EXIT
         
@@ -132,6 +165,36 @@ code segment
         
         callmult:
         call PRODUCT_A_B
+        jmp END
+        
+        leftclick:
+        ;get position
+        
+        mov AX, DX
+        mov DL, 0
+        mov DL, 8
+        div DL
+        ;
+
+        
+        
+        cmp AL, 04h
+        jz numbers
+        
+        cmp AL, 05h
+        jz calladd
+        
+        cmp AL, 06h
+        jz callsub
+        
+        cmp AL, 07h
+        jz callmult 
+        
+        cmp AL, 09h
+        jz EXIT 
+        
+        
+        
         jmp END
         
         
@@ -200,7 +263,8 @@ code segment
     INPUT_NUMBER proc near
          MOV DI, offset NUMBER
     
-    MOV CX,9
+    MOV CX,9 
+    mov AL, 00h
     INPUT:
     MOV AH, 01H
     INT 21H 
@@ -349,7 +413,8 @@ code segment
     CONV_ASC2BIN endp
     
     ADD_A_B proc near 
-        
+        lea DX, SHOWADD
+        call Display_String
         mov DI,offset SUM+3
         mov SI,offset A+3
         mov BX,Offset B+3
@@ -368,12 +433,15 @@ code segment
             dec BX
         
         loop Addition
+        
     
     ret
     
     ADD_A_B endp 
 
-    XminuY proc near
+    XminuY proc near 
+        lea DX, SHOWSUB
+        call Display_String
         mov DI,offset DIFFERENCE+3
         mov SI,offset A+3
         mov BX,Offset B+3
@@ -442,7 +510,9 @@ code segment
 
         ret
         
-    PRODUCT_A_B endp
+    PRODUCT_A_B endp 
+    
+    
 
     ; Erase all the variables ;
     Erase_Variables proc near
