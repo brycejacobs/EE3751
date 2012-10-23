@@ -262,13 +262,15 @@ code segment
 
     ;Grab the number from the user;
     INPUT_NUMBER proc near
-         MOV DI, offset NUMBER
+    MOV DI, offset NUMBER
     
     MOV CX,9 
     mov AL, 00h
     INPUT:
     MOV AH, 01H
     INT 21H 
+    
+    
     
     CMP AL,'Q'
     JZ  EXIT
@@ -433,12 +435,15 @@ code segment
             dec SI
             dec BX
         
-        loop Addition 
-        
-        call Bin_Dec_ASCII
-        
-        
-        
+        loop Addition
+         
+        mov si,offset SUM
+        lea di, NUMBER
+        mov di,000h
+        mov di+1,000h
+        mov di+2,000h
+        mov di+3,000h
+        call Bin_Dec_ASCII  
         lea DX, NUMBER
         call Display_String
         
@@ -466,6 +471,16 @@ code segment
             dec SI
             dec BX
         loop Subtract
+        
+        mov si,offset DIFFERENCE
+        lea di, NUMBER
+        mov di,000h
+        mov di+1,000h
+        mov di+2,000h
+        mov di+3,000h
+        call Bin_Dec_ASCII  
+        lea DX, NUMBER
+        call Display_String
     
     ret
     
@@ -515,7 +530,18 @@ code segment
             MOV AH, 09h
             MOV DX, OFFSET PRODUCT
             INT 21h
-
+            
+            
+        mov si,offset PRODUCT
+        lea di, NUMBER
+        mov di,000h
+        mov di+1,000h
+        mov di+2,000h
+        mov di+3,000h
+        
+        call Bin_Dec_ASCII  
+        lea DX, NUMBER
+        call Display_String
         ret
         
     PRODUCT_A_B endp 
@@ -545,7 +571,7 @@ code segment
 
     ;begin code:
 
-    mov si,offset SUM
+    
     mov di,offset NUMBER+10d
                            
     ;byte 8                   
