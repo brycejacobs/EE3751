@@ -432,7 +432,9 @@ code segment
             dec SI
             dec BX
         
-        loop Addition
+        loop Addition 
+        
+        call bin_Dec_acii
         
     
     ret
