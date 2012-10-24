@@ -14,6 +14,8 @@ SHOWSUB db 0Ah, 0Ah, 0Dh, 09h,'X-Y=$'
 SHOWMULT db 0Ah, 0Ah, 0Dh, 09h,'X*Y=$' 
 INPUTA db 0Ah, 0Ah, 0Dh, 09h,'X:$'
 INPUTB db 0Ah, 0Dh, 09h,'Y:$'
+SIGN DB '-$'
+
     
 A           db  4  DUP(?)
 B           db  4  DUP(?)
@@ -22,7 +24,7 @@ COUNT       db  4  DUP(?)
 SUM         db  4  DUP(?)          
 NUMBER      db  11 DUP(?),'$'
 
-DIFFERENCE  dw  4  DUP(?)
+DIFFERENCE  db  4  DUP(?)
 ends   
 
 stack segment
@@ -230,10 +232,17 @@ code segment
         call Display_String
         
         call INPUT_NUMBER
+        
          
         lea DI, A
         
-        call CONV_ASC2BIN
+        call CONV_ASC2BIN 
+        cmp [NUMBER+9],'-'
+        jnz Ret_a_cont
+        call SECOND_COMPLEMENT
+        
+        
+        Ret_a_cont:
         call Erase_Variables 
         
         ret
@@ -252,7 +261,13 @@ code segment
         
         lea DI, B
         
-        call CONV_ASC2BIN  
+        call CONV_ASC2BIN
+        cmp [NUMBER+9],'-'
+        jnz Ret_b_cont
+        call SECOND_COMPLEMENT
+        
+        
+        Ret_b_cont:  
         call Erase_Variables
         ret    
         
@@ -278,9 +293,12 @@ code segment
     JZ  EXIT  
     CMP AL,0Dh
     JZ  NEXT
-   
+    CMP AL,'-'
+    JNZ NOCOMPLEMENT
+    mov [di+9],'-'
+    jmp INPUT
     
-     
+    NOCOMPLEMENT: 
     MOV [DI],AL
     INC DI 
     LOOP  INPUT 
@@ -413,7 +431,28 @@ code segment
 
     ret
 
-    CONV_ASC2BIN endp
+    CONV_ASC2BIN endp 
+    
+    SECOND_COMPLEMENT proc near
+    MOV BX,3
+    MOV CX,3 
+    CLC
+    NOT [DI+BX] 
+    ADD [DI+BX],1 
+    DEC BX
+    CONVERTNUMBER:
+    NOT [DI+BX]
+    DEC BX
+    LOOP CONVERTNUMBER
+
+    ;ENDCONVERT 2COMPLEMENT
+    
+    
+    
+        
+    ret
+    SECOND_COMPLEMENT endp 
+    
     
     ADD_A_B proc near 
         lea DX, SHOWADD
@@ -421,7 +460,6 @@ code segment
         mov DI,offset SUM+3
         mov SI,offset A+3
         mov BX,Offset B+3
-        
         clc
         mov CX,4
         
@@ -433,21 +471,34 @@ code segment
             
             dec DI
             dec SI
-            dec BX
-        
+            dec BX     
         loop Addition
          
         mov si,offset SUM
-        lea di, NUMBER
-        mov di,000h
-        mov di+1,000h
-        mov di+2,000h
-        mov di+3,000h
-        call Bin_Dec_ASCII  
-        lea DX, NUMBER
+        mov al,[si]
+        and al,80H;check is it negative
+        cmp al,80H
+        jnz bin_dec
+        mov DI,offset SUM
+        call SECOND_COMPLEMENT
+        mov dx,offset sign
         call Display_String
+        bin_dec:
+        call Bin_Dec_ASCII
         
-    
+        
+        mov dx,offset Number
+        re_add:
+        mov di,dx
+        inc dx
+        mov al,[di+1]
+        cmp al,30h
+        jz re_add 
+
+  
+         
+        call Display_String
+        call Erase_Variables   
     ret
     
     ADD_A_B endp 
@@ -473,15 +524,32 @@ code segment
         loop Subtract
         
         mov si,offset DIFFERENCE
-        lea di, NUMBER
-        mov di,000h
-        mov di+1,000h
-        mov di+2,000h
-        mov di+3,000h
-        call Bin_Dec_ASCII  
-        lea DX, NUMBER
+        mov al,[si]
+        and al,80H;check is it negative
+        cmp al,80H
+        jnz bin_dec2
+        mov DI,offset DIFFERENCE
+        call SECOND_COMPLEMENT
+        mov dx,offset sign
         call Display_String
-    
+        bin_dec2:
+        call Bin_Dec_ASCII
+        
+        
+        mov dx,offset Number
+        re_add2:
+        mov di,dx
+        inc dx
+        mov al,[di+1]
+        cmp al,30h
+        jz re_add2  
+         
+        call Display_String
+        call Erase_Variables   
+   
+        ;****** 
+        
+        
     ret
     
     XminuY endp
