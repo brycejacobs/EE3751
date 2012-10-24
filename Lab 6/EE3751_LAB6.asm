@@ -19,7 +19,7 @@ SIGN DB '-$'
     
 A           db  4  DUP(?)
 B           db  4  DUP(?)
-PRODUCT     dw 4 DUP(?)
+PRODUCT     db  4  DUP(?)
 COUNT       db  4  DUP(?) 
 SUM         db  4  DUP(?)          
 NUMBER      db  11 DUP(?),'$'
@@ -555,61 +555,105 @@ code segment
     XminuY endp
     
     PRODUCT_A_B proc near
+        lea DX, SHOWMULT
+        call Display_String
         MOV BX,OFFSET A
-        MOV SI,OFFSET B 
+        MOV SI,OFFSET B
+        mov di,offset PRODUCT 
+
+        ;FIRST DIGIT
+        mov AH, [BX+2]
+        mov AL, [BX+3] 
+        mov cx,0
+        mov cl,[si+3]
+        mul cx
+        
+        MOV [DI],DH
+        MOV [DI+1],DL
+        MOV [DI+2],AH
+        MOV [DI+3],AL
+        
         mov AH, [BX]
         mov AL, [BX+1] 
+        mov cx,0
+        mov cl,[si+3]
+        mul cx
         
-        MOV CH, [SI]
-        MOV CL, [SI+1]
-        MUL CX  
-        MOV PRODUCT,AX
-        MOV PRODUCT+2,DX 
+        ADD [DI+1],AL
+        ADC [DI],AH
+        ;SECOND  DIGIT
+        mov AH, [BX+2]
+        mov AL, [BX+3] 
+        mov cx,0
+        mov cl,[si+2]
+        mul cx 
+
+        ADD [DI+2],AL
+        ADC [DI+1],AH
+        ADC [DI],DL 
         
-        MOV AH,[BX]
-        MOV AL,[BX+1] 
-        mov CH, [SI+2]
-        mov CL, [SI+3]
-        MUL CX
-        ADD PRODUCT+2,AX
-        ADC PRODUCT+4,DX
-        JNC L3
-        INC PRODUCT+6
+        mov AH, [BX]
+        mov AL, [BX+1] 
+        mov cx,0
+        mov cl,[si+2]
+        mul cx
+      
+        ADC [DI],AL
         
-        L3: MOV AH,[BX+2]
-            MOV AL,[BX+3]
-            MOV CH, [SI]
-            MOV CL, [SI+1]
-            MUL CX 
-            ADD PRODUCT+2,AX
-            ADC PRODUCT+4,DX
-            JNC L4
-            INC PRODUCT+6
-        
-        L4: MOV AH,[BX+2]
-            MOV AL,[BX+3] 
-            mov CH, [SI+2]
-            mov CL, [SI+3]
-            MUL CX
-            ADD PRODUCT+4,AX
-            ADC PRODUCT+6,DX
+        ;THRID DIGIT
+         
+        mov AH, [BX+2]
+        mov AL, [BX+3] 
+        mov cx,0
+        mov cl,[si+1]
+        mul cx 
+
+        ADD [DI+1],AL
+        ADC [DI],AH
             
-            MOV PRODUCT+8, 2400h ;Insert '$' so we can display String later
-            MOV AH, 09h
-            MOV DX, OFFSET PRODUCT
-            INT 21h
-            
-            
+         
+         
+        ;FOURTH DIGIT
+        mov AH, [BX+2]
+        mov AL, [BX+3] 
+        mov cx,0
+        mov cl,[si]
+        mul cx 
+
+        ADD [DI],AL
+        
+        
+        
+        
+        
+        ;*****
+        
+        
+        
+
         mov si,offset PRODUCT
-        lea di, NUMBER
-        mov di,000h
-        mov di+1,000h
-        mov di+2,000h
-        mov di+3,000h
-        
-        call Bin_Dec_ASCII  
-        lea DX, NUMBER
+        mov al,[si]
+        and al,80H;check is it negative
+        cmp al,80H
+        jnz bin_dec3
+        mov DI,offset PRODUCT
+        call SECOND_COMPLEMENT
+        mov dx,offset sign
         call Display_String
+        bin_dec3:
+        call Bin_Dec_ASCII
+        
+        
+        mov dx,offset Number
+        re_add3:
+        mov di,dx
+        inc dx
+        mov al,[di+1]
+        cmp al,30h
+        jz re_add3  
+         
+        call Display_String
+        call Erase_Variables
         ret
         
     PRODUCT_A_B endp 
