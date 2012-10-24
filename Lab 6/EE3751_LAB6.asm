@@ -557,10 +557,62 @@ code segment
     PRODUCT_A_B proc near
         lea DX, SHOWMULT
         call Display_String
+        MOV NUMBER,0
         MOV BX,OFFSET A
         MOV SI,OFFSET B
         mov di,offset PRODUCT 
-
+        PUSH [BX]
+        PUSH [BX+1]
+        PUSH [BX+2]
+        PUSH [BX+3]
+        PUSH [SI]
+        PUSH [SI+1]
+        PUSH [SI+2]
+        PUSH [SI+3]
+        
+        ;*************
+        
+        
+        mov al,[BX]
+        and al,80H;check is it negative
+        cmp al,80H
+        jnz REG_B
+        mov DI,offset A
+        call SECOND_COMPLEMENT
+        
+        ADD NUMBER,1
+        
+        REG_B: 
+        
+        mov al,[SI]
+        and al,80H;check is it negative
+        cmp al,80H
+        jnz REG_C
+        mov DI,offset B
+        call SECOND_COMPLEMENT
+        
+        ADD NUMBER,1
+        
+        REG_C:  
+        CMP NUMBER,1
+        JNZ NOT_SIGN
+        
+        mov dx,offset sign
+        call Display_String
+        call Erase_Variables
+        
+        
+        NOT_SIGN:
+        
+        
+        ;*************
+        MOV BX,OFFSET A
+        MOV SI,OFFSET B
+        mov di,offset PRODUCT
+        
+        
+        
+        
         ;FIRST DIGIT
         mov AH, [BX+2]
         mov AL, [BX+3] 
@@ -628,19 +680,8 @@ code segment
         
         ;*****
         
+        mov SI,offset PRODUCT
         
-        
-
-        mov si,offset PRODUCT
-        mov al,[si]
-        and al,80H;check is it negative
-        cmp al,80H
-        jnz bin_dec3
-        mov DI,offset PRODUCT
-        call SECOND_COMPLEMENT
-        mov dx,offset sign
-        call Display_String
-        bin_dec3:
         call Bin_Dec_ASCII
         
         
@@ -654,6 +695,26 @@ code segment
          
         call Display_String
         call Erase_Variables
+        
+        MOV BX,OFFSET A
+        MOV SI,OFFSET B
+        POP [SI+3]
+        POP [SI+2]
+        POP [SI+1]
+        POP [SI]
+        POP [BX+3]
+        POP [BX+2]
+        POP [BX+1]
+        POP [BX]
+        
+        
+        
+        
+        
+        
+        
+        
+        
         ret
         
     PRODUCT_A_B endp 
