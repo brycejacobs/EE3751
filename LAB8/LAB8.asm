@@ -18,14 +18,15 @@ jmp start
     optionchoice db 10d,13d,10d,13d,9,9,"    ENTER CHOICE:",10d,13d,10d,13d,'$'  
     
     option1_select db "Counting$"
-    resultup db " UP",10d,13d,10d,13d,'$'
-    resultdw db " Down",10d,13d,10d,13d,'$' 
+    resultup db " UP$"
+    resultdw db " Down$" 
     starting db "Starting at $"
-    ending   db 10d,13d,10d,13d,"Ending at $"
+    ending   db "Ending at $"
     DBDIRECTION DB 00H
     DBSTARTING  DB 00H
     DBENDING    DB 0FFH
-    
+    number db "225$" 
+    nextline db  10d,13d,'$'
     target db 4  DUP(030h) 
     
 
@@ -33,7 +34,15 @@ start:
 
 mov AH, 00h
 mov AL, 03h
-int 10h  
+int 10h 
+
+
+mov AH, 09h
+mov AL, ' '
+mov BH, 0
+mov BL, 00011110b
+mov CX, 10000d
+int 10h 
 
 
 
@@ -41,7 +50,12 @@ lea DX, optionmenu
 mov AH, 09h
 int 21h
 
-    restart:
+restart:
+lea DX, nextline
+mov AH, 09h
+int 21h
+    
+        
     mov al,0
     mov AH, 00h
     int 16h
@@ -120,7 +134,16 @@ mov [di+3],030h
 
 lea DX, starting
 mov AH, 09h
-int 21h
+int 21h 
+
+mov AL, 00h
+MOV AH, 01H
+INT 21H
+cmp al,030h
+jz default2
+MOV CX,3 
+
+jmp here2
 
 ;get user input
 MOV CX,3 
@@ -128,7 +151,7 @@ mov AL, 00h
 INPUT:
 MOV AH, 01H
 INT 21H 
-
+here2:
 cmp al,'-'
 jnz input_sign
 mov [di],'-'
@@ -169,12 +192,22 @@ mov al,[di+1]
 sub al,30h 
 mov cx,064H
 mul cl 
-add [bx],al
+add [bx],al  
+
+
 
 mov dx,199d
 mov ah,00h
 mov al,[DBSTARTING]
 out dx,al
+
+
+
+
+jmp restart 
+
+default2:
+mov [DBSTARTING],0 
 
 jmp restart 
 
@@ -196,7 +229,25 @@ mov [di+3],030h
 
 lea DX, ending
 mov AH, 09h
+int 21h 
+
+
+mov al,0
+mov AH, 00h
+int 16h 
+cmp al,030h
+jz default3
+
+mov ah, 2
+mov dl, al
 int 21h
+
+MOV CX,3 
+
+
+jmp here3
+
+
 
 ;get user input
 MOV CX,3 
@@ -204,7 +255,7 @@ mov AL, 00h
 INPUT3:
 MOV AH, 01H
 INT 21H 
-
+here3:
 cmp al,'-'
 jnz input_sign3
 mov [di],'-'
@@ -254,7 +305,12 @@ out dx,al
 
 jmp restart
 
-
+default3:
+mov [DBENDING],0FFh
+lea DX, number
+mov AH, 09h
+int 21h
+jmp restart 
 
 cmp_option4:
 ;counting routine
