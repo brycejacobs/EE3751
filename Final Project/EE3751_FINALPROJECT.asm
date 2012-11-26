@@ -21,7 +21,6 @@ code segment
       call GET_OBJECT_TASK
 
       ret
-        
     main endp
     
     ;Data register reading goes here.
@@ -48,8 +47,7 @@ code segment
             IN AL, DX
             and AL, 02h
             cmp AL, 00h 
-            jnz commandPortBusy
-            
+            jnz commandPortBusy 
         ret
     COMMAND_WAIT endp 
     
@@ -75,12 +73,19 @@ code segment
         ret
     GET_DATA_WAIT endp
     
-    MOVE_FORWARD proc near
-        call DO_NOTHING 
-        call COMMAND_WAIT
-        mov DX,09h 
-        mov AX,01h
-        OUT DX, AX
+    MOVE_FORWARD proc near  
+        startMove:
+        
+            call DO_NOTHING 
+            call COMMAND_WAIT
+            mov DX,09h 
+            mov AX,01h
+            OUT DX, AX 
+            
+           ; call ERROR_CHECK 
+            
+            
+        
         ret       
     MOVE_FORWARD endp
     
@@ -118,7 +123,12 @@ code segment
         mov AX,06h
         OUT DX,AX
         ret    
-    SWITCH_OFF_LAMP endp
+    SWITCH_OFF_LAMP endp 
+    
+    ERROR_CHECK proc near
+         
+        
+    ERROR_CHECK endp
     
     GET_OBJECT_TASK proc near
         
