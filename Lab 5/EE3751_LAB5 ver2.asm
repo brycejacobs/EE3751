@@ -121,6 +121,9 @@ code segment
             
 
         outputoption:
+        mov AH, 03h
+        int 10h
+        
         mov AH, 07h
         int 21h
         jmp keyboardread   
@@ -170,35 +173,35 @@ code segment
         call PRODUCT_A_B
         jmp END
         
-        leftclick:
+        ;leftclick:
         ;get position
         
-        mov AX, DX
-        mov DL, 0
-        mov DL, 8
-        div DL
+        ;mov AX, DX
+        ;mov DL, 0
+        ;mov DL, 8
+        ;div DL
         ;
 
         
         
-        cmp AL, 04h
-        jz numbers
+        ;cmp AL, 04h
+        ;jz numbers
         
-        cmp AL, 05h
-        jz calladd
+        ;cmp AL, 05h
+        ;jz calladd
         
-        cmp AL, 06h
-        jz callsub
+        ;cmp AL, 06h
+        ;jz callsub
         
-        cmp AL, 07h
-        jz callmult 
+        ;cmp AL, 07h
+        ;jz callmult 
         
-        cmp AL, 09h
-        jz EXIT 
+        ;cmp AL, 09h
+        ;jz EXIT 
         
         
         
-        jmp END
+        ;jmp END
         
         
          
@@ -498,8 +501,11 @@ code segment
   
          
         call Display_String
+        call next_line
         call Erase_Variables   
-    ret
+    ret 
+    
+    
     
     ADD_A_B endp 
 
@@ -1076,9 +1082,15 @@ code segment
     ret    
     ajust endp 
     
-    
-    
-    
+    next_line proc near
+        mov ah, 2
+	    mov dl,0Ah
+	    int 21h 
+	    mov dl,0dh
+	    int 21h
+
+        ret
+    next_line endp
     
     
     
