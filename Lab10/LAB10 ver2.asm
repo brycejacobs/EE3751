@@ -21,13 +21,13 @@ jmp start
     optionchoice db 10d,13d,10d,13d,9,9,"    ENTER CHOICE:",10d,13d,10d,13d,'$'  
     
     option1_select db "Counting$"
-    resultup db " UP$"
+    resultup db " Up$"
     resultdw db " Down$" 
     starting db "Starting at $"
     ending   db "Ending at $"
     countby  db "Counting By $"
     oneway   db "One Way$"
-    twoway   db "two way"
+    twoway   db "two way$"
     
     
     DBDIRECTION DB 00H
@@ -35,9 +35,9 @@ jmp start
     DBENDING    DB 0FFH
     DBCOUNTBYX  DB 01H
     DBWAY       DB 00H
-    dbwayswi    db 00h
     
-    number db "225$" 
+    
+    number db "255$" 
     nextline db  10d,13d,'$'
     target db 4  DUP(030h) 
     
@@ -61,14 +61,28 @@ int 10h
 lea DX, optionmenu ;print menu
 mov AH, 09h
 int 21h 
-
+         
+         
+ 	mov ch, 0
+     	mov cl, 7
+     	mov ah, 1
+     	int 10h
+         
+         
+         
 
 ;clear register
 mov [DBDIRECTION],0
 mov [DBSTARTING],0
 mov [DBENDING],0ffH
 mov [DBCOUNTBYX],1
-mov [DBWAY],0
+mov [DBWAY],0  
+
+;clear counter
+mov dx,199d
+mov ax,00h
+mov al,[DBSTARTING]
+out dx,ax
 
 
 restart:
@@ -109,7 +123,7 @@ jz cmp_option5
 
 cmp al,36h
 jz cmp_option6
-jmp restart:
+jmp restart
 
 
 ;******************
@@ -165,21 +179,33 @@ lea DX, starting
 mov AH, 09h
 int 21h 
 
-mov AL, 00h
-MOV AH, 01H
-INT 21H
+;mov AL, 00h
+;MOV AH, 01H
+;INT 21H  
+
+
+mov al,0
+mov AH, 00h
+int 16h
+
 cmp al,030h
 jz default2
-MOV CX,3 
+cmp al,031h
+jnz cmp_option2
+
+MOV CX,3 ; to take out the 
+MOV AH, 01H
+INT 21H 
 
 jmp here2
 
 ;get user input
-MOV CX,3 
-mov AL, 00h
+;MOV CX,3 
+;mov AL, 00h
 INPUT:
+
 MOV AH, 01H
-INT 21H 
+INT 21H  
 here2:
 cmp al,'-'
 jnz input_sign
@@ -210,7 +236,7 @@ afterinput:
 ;***************
 mov al,[di+3]
 sub al,30h
-mov [bx],ax
+mov [bx],al
 
 mov al,[di+2] 
 sub al,30h
@@ -238,6 +264,9 @@ jmp restart
 
 default2:
 mov [DBSTARTING],0 
+mov ah, 2
+mov dl, 030h
+int 21h
 
 jmp restart 
 
@@ -257,31 +286,33 @@ mov [di+3],030h
 
 
 
-lea DX, ending
+lea DX, ending ; display the first string
 mov AH, 09h
 int 21h 
 
 
 mov al,0
 mov AH, 00h
-int 16h 
+int 16h
+ 
 cmp al,030h
 jz default3
+cmp al,031h
+jnz cmp_option3
 
-mov ah, 2
-mov dl, al
-int 21h
+
 
 MOV CX,3 
-
+MOV AH, 01H
+INT 21H
 
 jmp here3
 
 
 
 ;get user input
-MOV CX,3 
-mov AL, 00h
+;MOV CX,3 
+;mov AL, 00h
 INPUT3:
 MOV AH, 01H
 INT 21H 
@@ -314,7 +345,7 @@ afterinput3:
 ;converting to decimal to hex
 mov al,[di+3]
 sub al,30h
-mov [bx],ax
+mov [bx],al
 
 mov al,[di+2] 
 sub al,30h
@@ -347,7 +378,15 @@ jmp restart
 cmp_option4:        
 ;********************
 ;counting routine
-;
+; 
+
+
+mov DH,[DBSTARTING]
+mov DL,[DBENDING]
+PUSH DX
+
+cmp_option4_after:
+
 mov dx,199d
 mov ah,00h
 mov al,[DBSTARTING]
@@ -357,66 +396,70 @@ cmp [DBDIRECTION],1
 jz downward
 
 upward:
-add al,[DBCOUNTBYX]
+mov cx,0
+mov cl,[DBCOUNTBYX]
+addbyx:
+
+inc al
+
+cmp [DBENDING],al
+je   end_option4
+loop addbyx
 out dx,al
-
-
-mov bl,[DBENDING]
-sub bl,al
-cmp bl, [DBCOUNTBYX]
-mov [dbwayswi],0
-jb  repeat
-jmp upward
-
-
-;cmp al,[DBENDING]
-;jz repeat
-;cmp al,0
-;jae repeat
-;jmp upward
-
-downward:
-sub al,[DBCOUNTBYX]
-out dx,al 
- 
- 
-mov cl,al 
-mov bl,[DBENDING]
-sub cl,bl
-cmp cl, [DBCOUNTBYX] 
-mov [dbwayswi],1
-jl  repeat
-jmp downward
-
-
-;cmp [DBENDING],al
-;jae repeat
-;cmp al,0h
-;jz repeat
-;jmp downward:
-
-
-repeat: 
-
-cmp [DBWAY],01h
-jz bf
-
-jmp start
- 
- 
-bf:
 mov bl,al
-mov al,[dbstarting]
-
-mov [dbstarting],bl
-mov [dbending],al
-mov al, [dbstarting]
-
-mov [DBWAY],00h
-
-cmp [dbwayswi],00h
-jz downward
 jmp upward
+
+downward: 
+mov cx,0 
+mov cl,[DBCOUNTBYX]
+subbyx:
+
+dec al
+cmp [DBENDING],al
+je   end_option4
+loop subbyx
+out dx,al 
+mov bl,al
+jmp downward 
+ 
+
+end_option4:
+
+cmp cx,1
+jnz b4b4restart
+out dx,al 
+
+b4b4restart:
+cmp [DBWAY],0
+je b4restart
+
+cmp  [DBWAY],2 ;pending dway
+jne  dway_2
+mov  [DBWAY],1
+not [DBDIRECTION] 
+and  [DBDIRECTION],1 
+jmp b4restart
+
+dway_2:
+mov  [DBWAY],2
+mov dl,[DBSTARTING]
+mov [DBENDING],dl
+mov al,bl
+mov [DBSTARTING],al 
+
+not [DBDIRECTION] 
+and  [DBDIRECTION],1 
+
+jmp cmp_option4_after
+
+b4restart: 
+
+pop dX
+mov [DBSTARTING],dh
+mov [DBENDING],dl
+
+jmp restart 
+
 
 
 ;*******************
@@ -484,7 +527,7 @@ afterinput_5:
 ;***************
 mov al,[di+3]
 sub al,30h
-mov [bx],ax
+mov [bx],al
 
 mov al,[di+2] 
 sub al,30h
@@ -556,7 +599,15 @@ jmp restart
 
 
 stop:
+mov al, 13h
+	mov ah, 0
+	int 10h
 
+
+
+mov AH, 4Ch
+int 21h    
+ ret
 
 RET
 
