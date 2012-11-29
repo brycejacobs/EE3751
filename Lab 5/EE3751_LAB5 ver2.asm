@@ -15,7 +15,7 @@ SHOWMULT db 0Ah, 0Ah, 0Dh, 09h,'X*Y=$'
 INPUTA db 0Ah, 0Ah, 0Dh, 09h,'X:$'
 INPUTB db 0Ah, 0Dh, 09h,'Y:$'
 SIGN DB '-$'
-
+position db 06d,07d
     
 A           db  4  DUP(?)
 B           db  4  DUP(?)
@@ -121,9 +121,7 @@ code segment
             
 
         outputoption:
-        mov AH, 03h
-        int 10h
-        
+       
         mov AH, 07h
         int 21h
         jmp keyboardread   
@@ -135,6 +133,11 @@ code segment
         int 21h    
         
         keyboardread:
+        
+        mov ch, 32
+     	mov ah, 1
+     	int 10h
+
             
 
         cmp AL, 51h
@@ -490,16 +493,23 @@ code segment
         call Bin_Dec_ASCII
         
         
+        
+        mov cx,0
         mov dx,offset Number
         re_add:
         mov di,dx
         inc dx
+        inc cx
         mov al,[di+1]
         cmp al,30h
         jz re_add 
 
-  
-         
+        cmp cx,0bH
+        jne aki
+        mov dx,offset Number
+        add dx,10d
+        
+        aki: 
         call Display_String
         call next_line
         call Erase_Variables   
@@ -541,16 +551,23 @@ code segment
         bin_dec2:
         call Bin_Dec_ASCII
         
-        
+        mov cx,0
         mov dx,offset Number
         re_add2:
         mov di,dx
         inc dx
+        inc cx
         mov al,[di+1]
         cmp al,30h
-        jz re_add2  
-         
+        jz re_add2 
+        
+        cmp cx,0bH
+        jne aki2
+        mov dx,offset Number
+        add dx,10d 
+        aki2: 
         call Display_String
+        call next_line
         call Erase_Variables   
    
         ;****** 
@@ -690,15 +707,22 @@ code segment
         
         call Bin_Dec_ASCII
         
-        
+        mov cx,0
         mov dx,offset Number
         re_add3:
         mov di,dx
-        inc dx
+        inc dx 
+        inc cx
         mov al,[di+1]
         cmp al,30h
-        jz re_add3  
+        jz re_add3 
+        
+        cmp cx,0bH
+        jne aki3
+        mov dx,offset Number
+        add dx,10d
          
+        aki3: 
         call Display_String
         call Erase_Variables
         
@@ -719,7 +743,7 @@ code segment
         
         
         
-        
+        call next_line
         
         ret
         
